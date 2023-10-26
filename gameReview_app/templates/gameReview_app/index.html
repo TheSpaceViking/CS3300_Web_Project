@@ -1,0 +1,13 @@
+<!-- inherit template for consistancy -->
+{% extends "gameReview_app/default_template.html" %}
+
+{% load static %}
+
+<!-- override block content in template -->
+{% block content%}
+
+<h1>Gamer Reviews 4 Gamers!</h1>
+<h2><img src="{% static 'images/construction.gif' %}" alt="ConstructionImage" width="100" height="100">Excuse our dust! Site under construction.<img src="{% static 'images/construction.gif' %}" alt="ConstructionImage" width="100" height="100"></h2>
+<img src="{% static 'images/construction1.gif' %}" alt="Construction1Image" style="margin-left: 175px;">
+
+{% endblock %}
