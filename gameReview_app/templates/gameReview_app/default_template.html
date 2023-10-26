@@ -1,6 +1,13 @@
 {% load static %}
 
 <!DOCTYPE html>
+
+<style>
+    .custom-navbar {
+        background-color: grey; /* set the navbar to be grey for now */
+    }
+</style>
+
 <html lang="en">
 <head>
 <title>GR4G</title>
@@ -14,7 +21,7 @@
 <body>
 <div class="container-fluid">
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+<nav class="navbar navbar-expand-lg custom-navbar">
     <div class="container-fluid">
         <img src="{% static 'images/gr4g_logo.gif' %}">
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
