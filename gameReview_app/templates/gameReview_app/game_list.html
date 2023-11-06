@@ -1,0 +1,26 @@
+{% extends "gameReview_app/default_template.html" %}
+{% block content %}
+<div class="container">
+    <h1>Games</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Publisher</th>
+                <th>Release Year</th>
+                <th>Overall Rating</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in games %}
+                <tr>
+                    <td><a href="{% url 'game_detail' game.id %}">{{ game.title }}</a></td>
+                    <td>{{ game.publisher }}</td>
+                    <td>{{ game.release_year }}</td>
+                    <td>{{ game.overall_rating }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

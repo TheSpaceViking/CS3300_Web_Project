@@ -2,9 +2,13 @@ from django.db import models
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.contrib import admin
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from django.db.models import Avg
 
 class Platform(models.Model):
     platform_choices = (
+        #currently existing platforms as per the internet.
         ('PS5', 'PlayStation 5'),
         ('XBOX_SERIES_X', 'Xbox Series X'),
         ('SWITCH', 'Nintendo Switch'),
@@ -76,9 +80,6 @@ class Publisher(models.Model):
     website = models.URLField()
     contact = models.CharField(max_length=200)
 
-from django.db import models
-
-# ... other model definitions ...
 
 class Game(models.Model):
     title = models.CharField(max_length=200)
@@ -92,47 +93,53 @@ class Game(models.Model):
         null=True,
         blank=True,
     )
-
+    cover_image = models.ImageField(upload_to='game_covers/', null=True, blank=True)
+    
     def __str__(self):
         return self.title
 
     def calculate_overall_average_rating(self):
-        reviews = self.reviews.all()  # Access reviews using the correct related name
-        if reviews:
-            overall_ratings = [review.overall_rating for review in reviews]
+        reviews = Review.objects.filter(game=self, review_ratings__isnull=False)
+        if reviews.exists():
+            overall_ratings = [review.review_ratings.overall_rating for review in reviews]
             average_rating = sum(overall_ratings) / len(overall_ratings)
             self.overall_rating = round(average_rating * 2) / 2
         else:
             self.overall_rating = None
 
 
+
+
 class Rating(models.Model):
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
-    overall_rating = models.DecimalField(
-        max_digits=2,
-        decimal_places=1,
+    review = models.OneToOneField(
+        'Review',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='review_ratings'
     )
-    gameplay_rating = models.DecimalField(
-        max_digits=2,
-        decimal_places=1,
-    )
-    graphics_rating = models.DecimalField(
-        max_digits=2,
-        decimal_places=1,
-    )
-    sound_rating = models.DecimalField(
-        max_digits=2,
-        decimal_places=1,
-    )
-    story_rating = models.DecimalField(
-        max_digits=2,
-        decimal_places=1,
-    )
+    overall_rating = models.DecimalField(max_digits=2, decimal_places=1)
+    gameplay_rating = models.DecimalField(max_digits=2, decimal_places=1)
+    graphics_rating = models.DecimalField(max_digits=2, decimal_places=1)
+    sound_rating = models.DecimalField(max_digits=2, decimal_places=1)
+    story_rating = models.DecimalField(max_digits=2, decimal_places=1)
+
+    def update_review_on_rating_save(self):
+        if self.review:  # Check if the rating is related to a review
+            # Calculate the average overall rating for all ratings related to the same review
+            average_rating = Rating.objects.filter(review=self.review).aggregate(Avg('overall_rating'))['overall_rating__avg']
+
+            if average_rating is not None:
+                self.review.overall_rating = round(average_rating * 2) / 2
+                self.review.save()
+    
     
     def __str__(self):
-        return self.get_overall_rating_display()
+        return str(self.overall_rating)
+    
 
 class Review(models.Model):
+    title = models.CharField(max_length=200, default="")
     game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
     content = models.CharField(max_length=1000)
     overall_rating = models.DecimalField(
@@ -143,8 +150,34 @@ class Review(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.rating_set.count() > 0:
-            subratings = [rating.overall_rating for rating in self.rating_set.all()]
-            average_rating = sum(subratings) / len(subratings)
-            self.overall_rating = round(average_rating * 2) / 2
+        if not self.overall_rating:
+            if hasattr(self, 'review_ratings') and self.review_ratings.count() > 0:
+                # Calculate the average overall rating from related ratings
+                average_rating = self.review_ratings.aggregate(Avg('overall_rating'))['overall_rating__avg']
+                if average_rating is not None:
+                    self.overall_rating = round(average_rating * 2) / 2
         super().save(*args, **kwargs)
+
+#this is where the ratings average out to give the review an overall rating
+@receiver(post_save, sender=Rating)
+def update_review_on_rating_save(sender, instance, **kwargs):
+    if instance.review:
+        # Calculate the average overall rating for all ratings related to the same review
+        average_rating = Rating.objects.filter(review=instance.review).aggregate(Avg('overall_rating'))['overall_rating__avg']
+
+        if average_rating is not None:
+            instance.review.overall_rating = round(average_rating * 2) / 2
+            instance.review.save()
+
+#the review checks to see if there is an overall rating, and if not, it sets it.            
+@receiver(pre_save, sender=Review)
+def update_review_overall_rating(sender, instance, **kwargs):
+    if not instance.overall_rating and hasattr(instance, 'review_ratings') and instance.review_ratings.count() > 0:
+        # Calculate the average overall rating from related ratings
+        average_rating = instance.review_ratings.aggregate(Avg('overall_rating'))['overall_rating__avg']
+        if average_rating is not None:
+            instance.overall_rating = round(average_rating * 2) / 2
+        # Update the overall rating of the associated game
+        if instance.game:
+            instance.game.calculate_overall_average_rating()
+            instance.game.save()

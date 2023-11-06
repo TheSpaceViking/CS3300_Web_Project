@@ -1,0 +1,54 @@
+{% extends "gameReview_app/default_template.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Game Title Image -->
+            <img src="{{ game.cover_image.url }}" alt="{{ game.title }}" width="200" height="300">
+        </div>
+        <div class="col-md-9">
+            <!-- Game Details -->
+            <h1>{{ game.title }}</h1>
+            <p><strong>Publisher:</strong> {{ game.publisher.name }}</p>
+            <p><strong>Release Year:</strong> {{ game.release_year }}</p>
+            <p><strong>Overall Rating:</strong> {{ game.overall_rating }}</p>
+            <p><strong>Platforms:</strong> 
+                {% for platform in game.platforms.all %}
+                    {{ platform.name }}
+                    {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+            <p><strong>Genres:</strong>
+                {% for genre in game.genre.all %}
+                    {{ genre.game_genre }}
+                    {% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+    
+    <!-- Review Cards -->
+    <div class="row mt-3">
+        {% for review in game.review_set.all %}
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{review.title}}</h5>
+                    <p class="card-text">{{ review.content }}</p>
+                    <p class="card-text">Overall Rating: {{review.overall_rating}}</p>
+                    <!-- Include other review details here -->
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- "Add Review" Button -->
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <a href="{% url 'create_review' game.id %}" class="btn btn-primary">Add Review</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
