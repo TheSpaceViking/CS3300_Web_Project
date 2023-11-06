@@ -4,7 +4,23 @@ from .models import Game, Genre, Publisher, Review, Rating
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
-        fields = '__all__'
+        exclude = ['overall_rating']
+        labels = {
+            'title': 'Title',
+            'cover_image': 'Cover Image',
+            'genre': 'Genre',
+            'publisher': 'Publisher',
+            'release_year': 'Release Year',
+            'platforms': 'Platforms',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'cover_image': forms.ClearableFileInput(attrs={'class': 'form-control-file'}),
+            'genre': forms.CheckboxSelectMultiple(),
+            'publisher': forms.Select(attrs={'class': 'form-select'}),
+            'release_year': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'platforms': forms.CheckboxSelectMultiple(),
+        }
 
 class GenreForm(forms.ModelForm):
     class Meta:

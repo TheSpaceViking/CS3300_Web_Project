@@ -1,4 +1,5 @@
 {% load static %}
+{% load bootstrap4 %}
 
 <!DOCTYPE html>
 
@@ -6,6 +7,18 @@
     .custom-navbar {
         background-color: grey; /* set the navbar to be grey for now */
     }
+
+    
+    body {
+        background-color: #d3d3d3;
+        /*
+        background-image: url('{% static 'images/blueBackground.jpg' %}');
+        background-attachment: fixed;
+        background-size: cover;
+        background-repeat: no-repeat;
+        */
+    }
+    
 </style>
 
 <html lang="en">
@@ -31,7 +44,7 @@
                     <a class="nav-link" href="{% url 'index' %}">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Menu 1</a>
+                    <a class="nav-link" href="{% url 'game_list' %}">Games</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">Menu 2</a>

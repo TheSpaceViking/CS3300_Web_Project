@@ -1,0 +1,54 @@
+{% extends "gameReview_app/default_template.html" %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="container">
+    <h1>Add a New Game</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.title.id }}">
+                <strong>Title:</strong>
+            </label>
+            {{ form.title }}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.cover_image.id }}">
+                <strong>Cover Image:</strong>
+            </label>
+            {{ form.cover_image }}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.genre.id }}">
+                <strong>Genre:</strong>
+            </label>
+            {{ form.genre }}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.publisher.id }}">
+                <strong>Publisher:</strong>
+            </label>
+            {{ form.publisher }}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.release_year.id }}">
+                <strong>Release Year:</strong>
+            </label>
+            {{ form.release_year }}
+        </div>
+        <br>
+        <div class="form-group">
+            <label for="{{ form.platforms.id }}">
+                <strong>Platforms:</strong>
+            </label>
+            {{ form.platforms }}
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+{% endblock %}

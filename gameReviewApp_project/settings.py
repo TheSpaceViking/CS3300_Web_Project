@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gameReview_app',
+    'bootstrap4',
 ]
 
 AUTHENTICATION_BACKENDS =[

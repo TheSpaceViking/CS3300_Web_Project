@@ -1,26 +1,41 @@
 {% extends "gameReview_app/default_template.html" %}
+{% load bootstrap4 %}
+
 {% block content %}
+<style>
+    table {
+        table-layout: auto; /* Automatically adjust column width based on content */
+    }
+</style>
 <div class="container">
-    <h1>Games</h1>
-    <table class="table table-bordered">
+    <h1>All Games:</h1>
+    <a href="{% url 'add_game' %}" class="btn btn-primary ml-auto">Add Game</a>
+    <table class="table table-bordered" id="games-table">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>Publisher</th>
-                <th>Release Year</th>
-                <th>Overall Rating</th>
+                <th style="text-align: center; vertical-align: middle;">Cover Art</th>
+                <th style="text-align: center; vertical-align: middle;">Title</th>
+                <th style="text-align: center; vertical-align: middle;">Publisher</th>
+                <th style="text-align: center; vertical-align: middle;">Release Year</th>
+                <th style="text-align: center; vertical-align: middle;">Overall Rating</th>
             </tr>
         </thead>
         <tbody>
             {% for game in games %}
                 <tr>
-                    <td><a href="{% url 'game_detail' game.id %}">{{ game.title }}</a></td>
-                    <td>{{ game.publisher }}</td>
-                    <td>{{ game.release_year }}</td>
-                    <td>{{ game.overall_rating }}</td>
+                    <td style="text-align: center; vertical-align: middle;">
+                        <img src="{{ game.cover_image.url }}" alt="{{ game.title }}" width="100" height="150">
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">
+                        <a href="{% url 'game_detail' game.id %}">{{ game.title }}</a>
+                    </td>
+                    <td style="text-align: center; vertical-align: middle;">{{ game.publisher.name }}</td>
+                    <td style="text-align: center; vertical-align: middle;">{{ game.release_year }}</td>
+                    <td style="text-align: center; vertical-align: middle;">{{ game.overall_rating }}</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+    <a href="{% url 'add_game' %}" class="btn btn-primary ml-auto">Add Game</a>
 </div>
 {% endblock %}

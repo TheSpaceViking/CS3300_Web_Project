@@ -39,6 +39,17 @@ def genre_list(request):
     genres = Genre.objects.all()
     return render(request, 'gameReview_app/genre_list.html', {'genres': genres})
 
+def add_game(request):
+    if request.method == 'POST':
+        form = GameForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('game_list')  # Redirect to the list of existing games after adding a new one
+    else:
+        form = GameForm()
+
+    return render(request, 'gameReview_app/game_form.html', {'form': form})
+
 def create_review(request, game_id):
     game = Game.objects.get(pk=game_id)
 
