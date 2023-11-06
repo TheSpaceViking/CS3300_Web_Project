@@ -104,9 +104,6 @@ class Game(models.Model):
         else:
             self.overall_rating = None
 
-
-
-
 class Rating(models.Model):
     review = models.OneToOneField(
         'Review',
