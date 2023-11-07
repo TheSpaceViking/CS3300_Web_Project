@@ -44,9 +44,8 @@ class ReviewForm(forms.ModelForm):
 class RatingForm(forms.ModelForm):
     class Meta:
         model = Rating
-        exclude = ['game', 'review']
+        exclude = ['game', 'review', 'overall_rating']
         widgets = {
-            'overall_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
             'gameplay_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
             'graphics_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
             'sound_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),

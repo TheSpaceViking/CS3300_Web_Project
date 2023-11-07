@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
+from decimal import Decimal, ROUND_HALF_UP
 
 class Platform(models.Model):
     platform_choices = (
@@ -106,30 +107,37 @@ class Game(models.Model):
 
 class Rating(models.Model):
     review = models.OneToOneField(
-        'Review',
+        'gameReview_app.Review',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='review_ratings'
     )
-    overall_rating = models.DecimalField(max_digits=2, decimal_places=1)
+    overall_rating = models.DecimalField(max_digits=2, decimal_places=1, null=True, blank=True)
     gameplay_rating = models.DecimalField(max_digits=2, decimal_places=1)
     graphics_rating = models.DecimalField(max_digits=2, decimal_places=1)
     sound_rating = models.DecimalField(max_digits=2, decimal_places=1)
     story_rating = models.DecimalField(max_digits=2, decimal_places=1)
 
-    def update_review_on_rating_save(self):
-        if self.review:  # Check if the rating is related to a review
-            # Calculate the average overall rating for all ratings related to the same review
-            average_rating = Rating.objects.filter(review=self.review).aggregate(Avg('overall_rating'))['overall_rating__avg']
+    def save(self, *args, **kwargs):
+        if self.review:
+            # Calculate the overall rating as an average of individual ratings
+            gameplay_rating = Decimal(str(self.gameplay_rating))
+            graphics_rating = Decimal(str(self.graphics_rating))
+            sound_rating = Decimal(str(self.sound_rating))
+            story_rating = Decimal(str(self.story_rating))
+            
+            overall_rating = (gameplay_rating + graphics_rating +
+                              sound_rating + story_rating) / Decimal(4)
 
-            if average_rating is not None:
-                self.review.overall_rating = round(average_rating * 2) / 2
-                self.review.save()
-    
-    
-    def __str__(self):
-        return str(self.overall_rating)
+            # Round to one decimal place, e.g., 3.725 -> 3.7
+            self.overall_rating = overall_rating.quantize(Decimal('0.0'), rounding=ROUND_HALF_UP)
+
+            # Update the associated review's overall_rating
+            self.review.overall_rating = self.overall_rating
+            self.review.save()
+
+        super().save(*args, **kwargs)
     
 
 class Review(models.Model):
@@ -144,13 +152,10 @@ class Review(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if not self.overall_rating:
-            if hasattr(self, 'review_ratings') and self.review_ratings.count() > 0:
-                # Calculate the average overall rating from related ratings
-                average_rating = self.review_ratings.aggregate(Avg('overall_rating'))['overall_rating__avg']
-                if average_rating is not None:
-                    self.overall_rating = round(average_rating * 2) / 2
         super().save(*args, **kwargs)
+        if self.game:
+            self.game.calculate_overall_average_rating()
+            self.game.save()
 
 #this is where the ratings average out to give the review an overall rating
 @receiver(post_save, sender=Rating)
