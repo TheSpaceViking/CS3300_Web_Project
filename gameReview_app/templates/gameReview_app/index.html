@@ -1,4 +1,4 @@
-<!-- inherit template for consistancy -->
+<!-- inherit template for consistency -->
 {% extends "gameReview_app/default_template.html" %}
 
 {% load static %}
@@ -6,22 +6,47 @@
 <!-- override block content in template -->
 {% block content%}
 
-<h1>Gamer Reviews 4 Gamers!</h1>
-<h2><img src="{% static 'images/construction.gif' %}" alt="ConstructionImage" width="100" height="100">Excuse our dust! Site under construction.<img src="{% static 'images/construction.gif' %}" alt="ConstructionImage" width="100" height="100"></h2>
-<img src="{% static 'images/construction1.gif' %}" alt="Construction1Image" style="margin-left: 175px;">
-<h1>Welcome to Gamer Reviews 4 Gamers!</h1>
-<h2>Recently Reviewed Games:</h2>
-<div class="container">
-    <ul>
-        {% for game in games %}
-            <li>
-                <a href="{% url 'game_detail' game.id %}">
-                    <img src="{{ game.cover_image.url }}" alt="{{ game.title }}" width="100" height="150">
-                    <p style="font-weight: bold;">{{ game.title }}</p>
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
+<div class="container text-center">
+    <h1>Welcome to Gamer Reviews 4 Gamers!</h1>
 </div>
+<div class="container text-left">
+    <h2>Recently Reviewed Games:</h2>
+    <div class="row">
+        {% for game in games %}
+            <div class="col-lg-4 col-md-6 col-sm-12"> <!-- Adjust the column sizes as needed -->
+                <div class="card mb-4">
+                    <a href="{% url 'game_detail' game.id %}">
+                        <div class="custom-card-img-container">
+                            <img src="{{ game.cover_image.url }}" alt="{{ game.title }}" class="card-img-top custom-card-img">
+                        </div>
+                    </a>
+                    <div class="card-body text-center"> <!-- Center text -->
+                        <a href="{% url 'game_detail' game.id %}">
+                            <h5 class="card-title">{{ game.title }}</h5>
+                            <p>Overall Rating: {{ game.overall_rating }}/5</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .custom-card-img-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        object-fit: cover;
+    }
+
+    .custom-card-img {
+        width: 415px;
+        height: 655px;
+        object-fit: cover;
+        object-position: center;
+        margin: 1 auto;
+    }
+</style>
 
 {% endblock %}

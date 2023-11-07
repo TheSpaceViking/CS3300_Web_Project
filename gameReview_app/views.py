@@ -41,13 +41,14 @@ def genre_list(request):
 
 def add_game(request):
     if request.method == 'POST':
-        form = GameForm(request.POST)
+        form = GameForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('game_list')  # Redirect to the list of existing games after adding a new one
+            game = form.save()
+            # Optionally, you can redirect to the game's detail page or another appropriate page.
+            return redirect('game_detail', game_id=game.id)
     else:
         form = GameForm()
-
+    
     return render(request, 'gameReview_app/game_form.html', {'form': form})
 
 def create_review(request, game_id):
