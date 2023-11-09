@@ -73,10 +73,6 @@ def add_game(request):
     
     return render(request, 'gameReview_app/game_form.html', {'form': form, 'publishers': publishers})
 
-from django.contrib.auth.decorators import login_required
-
-# ...
-
 @login_required
 def create_review(request, game_id):
     game = Game.objects.get(pk=game_id)
