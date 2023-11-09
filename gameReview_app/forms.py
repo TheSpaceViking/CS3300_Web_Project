@@ -42,7 +42,7 @@ class GameForm(forms.ModelForm):
 class ReviewForm(forms.ModelForm):
     class Meta:
         model = Review
-        exclude = ['game', 'overall_rating']
+        exclude = ['game', 'user', 'overall_rating']
         widgets = {
             'content': forms.Textarea(attrs={'rows': 5}),  # Adjust the 'rows' attribute to control the number of visible rows
             'overall_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
@@ -63,4 +63,3 @@ class PublisherForm(forms.ModelForm):
     class Meta:
         model = Publisher
         fields = ['name', 'website', 'contact']
-

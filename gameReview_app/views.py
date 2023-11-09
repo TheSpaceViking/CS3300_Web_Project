@@ -3,14 +3,16 @@ from django.contrib.auth import login
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from .models import Game, Platform, Genre, User
+from django.db.models import Q
+from .models import Game, Platform, Genre, User, Publisher
 from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, RatingForm
 
 # Create your views here.
 def index(request):
     if request.user.is_authenticated:
         user_genres = request.user.favorite_genres.all()
-        games = Game.objects.filter(genre__in=user_genres)
+        # Use Q objects and distinct to ensure unique games
+        games = Game.objects.filter(Q(genre__in=user_genres) | Q(genre__isnull=True)).distinct()
     else:
         games = Game.objects.all()
 
@@ -59,6 +61,7 @@ def genre_list(request):
     return render(request, 'gameReview_app/genre_list.html', {'genres': genres})
 
 def add_game(request):
+    publishers = Publisher.objects.all()
     if request.method == 'POST':
         form = GameForm(request.POST, request.FILES)
         if form.is_valid():
@@ -68,8 +71,13 @@ def add_game(request):
     else:
         form = GameForm()
     
-    return render(request, 'gameReview_app/game_form.html', {'form': form})
+    return render(request, 'gameReview_app/game_form.html', {'form': form, 'publishers': publishers})
 
+from django.contrib.auth.decorators import login_required
+
+# ...
+
+@login_required
 def create_review(request, game_id):
     game = Game.objects.get(pk=game_id)
 
@@ -80,6 +88,7 @@ def create_review(request, game_id):
         if review_form.is_valid() and rating_form.is_valid():
             review = review_form.save(commit=False)
             review.game = game
+            review.user = request.user  # Associate the review with the logged-in user
             review.save()  # Save the Review instance first
 
             rating = rating_form.save(commit=False)
@@ -98,6 +107,7 @@ def create_review(request, game_id):
         'review_form': review_form,
         'rating_form': rating_form,
     })
+
     
 def user_registration(request):
     if request.method == 'POST':

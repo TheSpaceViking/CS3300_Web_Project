@@ -1,9 +1,77 @@
 from django.db import models
+from django.http import HttpRequest
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
 from decimal import Decimal, ROUND_HALF_UP
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
+
+class Genre(models.Model):
+    genre_choices = (
+        ('ACTION', 'Action'),
+        ('ADVENTURE', 'Adventure'),
+        ('RPG', 'Role-Playing Game'),
+        ('STRATEGY', 'Strategy'),
+        ('SPORTS', 'Sports'),
+        ('SIMULATION', 'Simulation'),
+        ('PUZZLE', 'Puzzle'),
+        ('HORROR', 'Horror'),
+        ('SHOOTER', 'Shooter'),
+        ('PLATFORMER', 'Platformer'),
+        ('RACING', 'Racing'),
+        ('FIGHTING', 'Fighting'),
+        ('MOBA', 'MOBA'),
+        ('SURVIVAL', 'Survival'),
+        ('SANDBOX', 'Sandbox'),
+        ('STEALTH', 'Stealth'),
+        ('MUSIC', 'Music'),
+        ('EDUCATIONAL', 'Educational'),
+        ('OPEN_WORLD', 'Open World'),
+        ('OTHER', 'Other'),
+    )
+    genre_choices = sorted(genre_choices, key=lambda x: x[1])
+    game_genre = models.CharField(max_length=50, choices=genre_choices)
+    
+    def __str__(self):
+        return self.get_game_genre_display()
+
+class UserManager(BaseUserManager):
+    def create_user(self, email, first_name, last_name, user_name, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, first_name=first_name, last_name=last_name, user_name=user_name, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, first_name, last_name, password=None, **extra_fields):
+        # Create a superuser with the provided information
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+        user_name = f'admin{self.model.objects.count() + 1}'  # Set user_name as "admin" + the user's id
+        return self.create_user(email, first_name, last_name, user_name, password, **extra_fields)
+    
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField('Email', unique=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    user_name = models.CharField(max_length=100, unique=True)
+    is_active = models.BooleanField('Active', default=True)
+    is_staff = models.BooleanField('Staff status', default=False)
+    # Add a field to represent selected genres
+    favorite_genres = models.ManyToManyField(Genre, blank=True)
+    # Add related_name arguments to avoid conflicts
+    groups = models.ManyToManyField(Group, verbose_name='Groups', blank=True, related_name='custom_user_set')
+    user_permissions = models.ManyToManyField(Permission, verbose_name='User Permissions', blank=True, related_name='custom_user_set')
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    def __str__(self):
+        return self.email
 
 class Platform(models.Model):
     platform_choices = (
@@ -42,37 +110,6 @@ class Platform(models.Model):
 
     def __str__(self):
         return self.get_name_display()
-
-
-class Genre(models.Model):
-    genre_choices = (
-        ('ACTION', 'Action'),
-        ('ADVENTURE', 'Adventure'),
-        ('RPG', 'Role-Playing Game'),
-        ('STRATEGY', 'Strategy'),
-        ('SPORTS', 'Sports'),
-        ('SIMULATION', 'Simulation'),
-        ('PUZZLE', 'Puzzle'),
-        ('HORROR', 'Horror'),
-        ('SHOOTER', 'Shooter'),
-        ('PLATFORMER', 'Platformer'),
-        ('RACING', 'Racing'),
-        ('FIGHTING', 'Fighting'),
-        ('MOBA', 'MOBA'),
-        ('SURVIVAL', 'Survival'),
-        ('SANDBOX', 'Sandbox'),
-        ('STEALTH', 'Stealth'),
-        ('MUSIC', 'Music'),
-        ('EDUCATIONAL', 'Educational'),
-        ('OPEN_WORLD', 'Open World'),
-        ('OTHER', 'Other'),
-    )
-    genre_choices = sorted(genre_choices, key=lambda x: x[1])
-    game_genre = models.CharField(max_length=50, choices=genre_choices)
-    
-    def __str__(self):
-        return self.get_game_genre_display()
-
 
 class Publisher(models.Model):
     name = models.CharField(max_length=100)
@@ -140,9 +177,9 @@ class Rating(models.Model):
 
         super().save(*args, **kwargs)
     
-
 class Review(models.Model):
     title = models.CharField(max_length=200, default="")
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
     content = models.CharField(max_length=1000)
     overall_rating = models.DecimalField(
@@ -153,49 +190,24 @@ class Review(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        # Get the currently logged-in user from the request object
+        user = self._get_current_user()
+
+        if user:
+            self.user = user
+
         super().save(*args, **kwargs)
+
         if self.game:
             self.game.calculate_overall_average_rating()
             self.game.save()
-            
-class UserManager(BaseUserManager):
-    def create_user(self, email, first_name, last_name, user_name, password=None, **extra_fields):
-        if not email:
-            raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, first_name=first_name, last_name=last_name, user_name=user_name, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
 
-    def create_superuser(self, email, first_name, last_name, password=None, **extra_fields):
-        # Create a superuser with the provided information
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_staff', True)
-        user_name = f'admin{self.model.objects.count() + 1}'  # Set user_name as "admin" + the user's id
-        return self.create_user(email, first_name, last_name, user_name, password, **extra_fields)
-
-class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField('Email', unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    user_name = models.CharField(max_length=100, unique=True)
-    is_active = models.BooleanField('Active', default=True)
-    is_staff = models.BooleanField('Staff status', default=False)
-    # Add a field to represent selected genres
-    favorite_genres = models.ManyToManyField(Genre, blank=True)
-    # Add related_name arguments to avoid conflicts
-    groups = models.ManyToManyField(Group, verbose_name='Groups', blank=True, related_name='custom_user_set')
-    user_permissions = models.ManyToManyField(Permission, verbose_name='User Permissions', blank=True, related_name='custom_user_set')
-
-    objects = UserManager()
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name']
-
-    def __str__(self):
-        return self.email
-    
+    def _get_current_user(self):
+        # This function tries to get the currently logged-in user from the request object
+        # You should pass the request object when saving a review
+        if hasattr(HttpRequest, 'user') and self._request.user.is_authenticated:
+            return self._request.user
+        return None
 
 #this is where the ratings average out to give the review an overall rating
 @receiver(post_save, sender=Rating)
