@@ -75,7 +75,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Platform(models.Model):
     platform_choices = (
-        #currently existing platforms as per the internet.
+        # Currently existing platforms as per the internet.
         ('PS5', 'PlayStation 5'),
         ('XBOX_SERIES_X', 'Xbox Series X'),
         ('SWITCH', 'Nintendo Switch'),
@@ -129,7 +129,7 @@ class Game(models.Model):
         null=True,
         blank=True,
     )
-    cover_image = models.ImageField(upload_to='game_covers/', null=True, blank=True)
+    cover_image = models.ImageField(upload_to='game_covers/', null=True, blank=True) # Saves the uploaded image to media/game_covers
     
     def __str__(self):
         return self.title

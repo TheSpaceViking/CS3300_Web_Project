@@ -62,16 +62,36 @@ def genre_list(request):
 
 def add_game(request):
     publishers = Publisher.objects.all()
+
     if request.method == 'POST':
         form = GameForm(request.POST, request.FILES)
         if form.is_valid():
-            game = form.save()
-            # Optionally, you can redirect to the game's detail page or another appropriate page.
+            game = form.save(commit=False)  # Create the game object but don't save it yet
+
+            # Process selected genres and platforms
+            selected_genres = request.POST.getlist('genre')  # Get a list of selected genres
+            selected_platforms = request.POST.getlist('platforms')  # Get a list of selected platforms
+
+            game.save()  # Save the game object first
+
+            # Now, add the selected genres and platforms to the game
+            game.genre.set(selected_genres)
+            game.platforms.set(selected_platforms)
+
+            # Here, we are also handling the publisher
+            publisher_id = request.POST.get('publisher')
+            if publisher_id:
+                publisher = Publisher.objects.get(pk=publisher_id)
+                game.publisher = publisher
+
+            game.save()  # Finally, save the game with the selected genres, platforms, and publisher
+            
             return redirect('game_detail', game_id=game.id)
     else:
         form = GameForm()
-    
+
     return render(request, 'gameReview_app/game_form.html', {'form': form, 'publishers': publishers})
+
 
 @login_required
 def create_review(request, game_id):

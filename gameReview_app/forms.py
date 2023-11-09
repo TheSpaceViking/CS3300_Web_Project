@@ -21,6 +21,7 @@ class UserRegistrationForm(forms.Form):
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
+        fields = '__all__'
         exclude = ['overall_rating']
         labels = {
             'title': 'Title',

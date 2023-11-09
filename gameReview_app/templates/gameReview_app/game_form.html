@@ -30,14 +30,14 @@
             <label for="{{ form.publisher.id }}">
                 <strong>Publisher:</strong>
             </label>
-            <select name="{{ form.publisher.name.name }}" class="form-select">
+            <select name="publisher" class="form-select">
                 <option value="" selected disabled>Select a Publisher</option>
                 {% for publisher in publishers %}
                     <option value="{{ publisher.id }}">{{ publisher.name }}</option>
                 {% endfor %}
             </select>
             <label for="publisher-popup" class="btn btn-secondary">Add Publisher</label>
-        </div>
+        </div>        
         <br>
         <div class="form-group">
             <label for="{{ form.release_year.id }}">
