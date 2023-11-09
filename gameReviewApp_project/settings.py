@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'gameReview_app',
-    'django_bootstrap5',
+    'bootstrap5',
 ]
 
 AUTHENTICATION_BACKENDS =[
@@ -132,3 +132,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+AUTH_USER_MODEL = 'gameReview_app.User'
+LOGOUT_REDIRECT_URL = 'index'  # Replace 'index' with the actual name of your index URL pattern

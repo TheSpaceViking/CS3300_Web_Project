@@ -1,0 +1,17 @@
+{% extends "gameReview_app/default_template.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Login</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.username.label_tag }}
+        {{ form.username }}
+        {{ form.password.label_tag }}
+        {{ form.password }}
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    <p>Don't have an account? <a href="{% url 'user_registration' %}">Sign Up</a></p>
+</div>
+{% endblock %}
+

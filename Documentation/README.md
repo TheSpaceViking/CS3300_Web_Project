@@ -29,3 +29,9 @@ def create_initial_platforms_and_genres(apps, schema_editor):
     ]  # Add all genre choices
     for genre in genres:
         Genre.objects.create(game_genre=genre)
+
+in the migration class look for operations and add the following call to the bottom of the operations list.
+
+operations = [
+        migrations.RunPython(create_initial_platforms_and_genres),
+    ]

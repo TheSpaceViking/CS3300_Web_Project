@@ -1,6 +1,23 @@
 from django import forms
-from .models import Game, Genre, Publisher, Review, Rating
+from django.contrib.auth.forms import AuthenticationForm
+from .models import Game, Review, Rating, Genre, Publisher
 
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}))
+
+class UserRegistrationForm(forms.Form):
+    email = forms.EmailField(label='Email')
+    first_name = forms.CharField(max_length=100, label='First Name')
+    last_name = forms.CharField(max_length=100, label='Last Name')
+    user_name = forms.CharField(max_length=100, label='Username')
+    password = forms.CharField(widget=forms.PasswordInput, label='Password')
+    favorite_genres = forms.ModelMultipleChoiceField(
+        queryset=Genre.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        label='Favorite Genres'
+    )
+    
 class GameForm(forms.ModelForm):
     class Meta:
         model = Game
@@ -21,16 +38,6 @@ class GameForm(forms.ModelForm):
             'release_year': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'platforms': forms.CheckboxSelectMultiple(),
         }
-
-class GenreForm(forms.ModelForm):
-    class Meta:
-        model = Genre
-        fields = '__all__'
-        
-class PublisherForm(forms.ModelForm):
-    class Meta:
-        model = Publisher
-        fields = '__all__'
         
 class ReviewForm(forms.ModelForm):
     class Meta:
@@ -51,4 +58,9 @@ class RatingForm(forms.ModelForm):
             'sound_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
             'story_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
         }
+        
+class PublisherForm(forms.ModelForm):
+    class Meta:
+        model = Publisher
+        fields = ['name', 'website', 'contact']
 

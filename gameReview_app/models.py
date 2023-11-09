@@ -3,6 +3,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
 from decimal import Decimal, ROUND_HALF_UP
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin, Group, Permission
 
 class Platform(models.Model):
     platform_choices = (
@@ -156,6 +157,45 @@ class Review(models.Model):
         if self.game:
             self.game.calculate_overall_average_rating()
             self.game.save()
+            
+class UserManager(BaseUserManager):
+    def create_user(self, email, first_name, last_name, user_name, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, first_name=first_name, last_name=last_name, user_name=user_name, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, first_name, last_name, password=None, **extra_fields):
+        # Create a superuser with the provided information
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+        user_name = f'admin{self.model.objects.count() + 1}'  # Set user_name as "admin" + the user's id
+        return self.create_user(email, first_name, last_name, user_name, password, **extra_fields)
+
+class User(AbstractBaseUser, PermissionsMixin):
+    email = models.EmailField('Email', unique=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    user_name = models.CharField(max_length=100, unique=True)
+    is_active = models.BooleanField('Active', default=True)
+    is_staff = models.BooleanField('Staff status', default=False)
+    # Add a field to represent selected genres
+    favorite_genres = models.ManyToManyField(Genre, blank=True)
+    # Add related_name arguments to avoid conflicts
+    groups = models.ManyToManyField(Group, verbose_name='Groups', blank=True, related_name='custom_user_set')
+    user_permissions = models.ManyToManyField(Permission, verbose_name='User Permissions', blank=True, related_name='custom_user_set')
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    def __str__(self):
+        return self.email
+    
 
 #this is where the ratings average out to give the review an overall rating
 @receiver(post_save, sender=Rating)
