@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.shortcuts import render
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.db.models import Q
@@ -11,8 +12,11 @@ from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, Ra
 def index(request):
     if request.user.is_authenticated:
         user_genres = request.user.favorite_genres.all()
-        # Use Q objects and distinct to ensure unique games
-        games = Game.objects.filter(Q(genre__in=user_genres) | Q(genre__isnull=True)).distinct()
+        if user_genres.count() > 0:
+            # Use Q objects and distinct to ensure unique games
+            games = Game.objects.filter(Q(genre__in=user_genres) | Q(genre__isnull=True)).distinct()
+        else:
+            games = Game.objects.all
     else:
         games = Game.objects.all()
 
@@ -60,32 +64,30 @@ def genre_list(request):
     genres = Genre.objects.all()
     return render(request, 'gameReview_app/genre_list.html', {'genres': genres})
 
+@login_required
 def add_game(request):
     publishers = Publisher.objects.all()
 
     if request.method == 'POST':
         form = GameForm(request.POST, request.FILES)
         if form.is_valid():
-            game = form.save(commit=False)  # Create the game object but don't save it yet
+            game = form.save(commit=False)
+            selected_genres = request.POST.getlist('genre')
+            selected_platforms = request.POST.getlist('platforms')
 
-            # Process selected genres and platforms
-            selected_genres = request.POST.getlist('genre')  # Get a list of selected genres
-            selected_platforms = request.POST.getlist('platforms')  # Get a list of selected platforms
-
-            game.save()  # Save the game object first
-
-            # Now, add the selected genres and platforms to the game
+            game.save()
             game.genre.set(selected_genres)
             game.platforms.set(selected_platforms)
 
-            # Here, we are also handling the publisher
             publisher_id = request.POST.get('publisher')
             if publisher_id:
                 publisher = Publisher.objects.get(pk=publisher_id)
                 game.publisher = publisher
 
-            game.save()  # Finally, save the game with the selected genres, platforms, and publisher
-            
+            game.save()
+
+            messages.success(request, 'Game added successfully.')  # Display a success message
+
             return redirect('game_detail', game_id=game.id)
     else:
         form = GameForm()
@@ -140,8 +142,8 @@ def user_registration(request):
             user = User.objects.create_user(email=email, first_name=first_name, last_name=last_name, user_name=user_name, password=password)
             user.favorite_genres.set(favorite_genres)
 
-            # Redirect to a success page or login page
-            return redirect('index')
+            # Redirect to login page
+            return redirect('login')
     else:
         form = UserRegistrationForm()
 

@@ -71,7 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
     def __str__(self):
-        return self.email
+        return self.user_name
 
 class Platform(models.Model):
     platform_choices = (
@@ -115,6 +115,9 @@ class Publisher(models.Model):
     name = models.CharField(max_length=100)
     website = models.URLField()
     contact = models.CharField(max_length=200)
+    
+    def __str__(self):
+        return self.name
 
 
 class Game(models.Model):
@@ -157,6 +160,9 @@ class Rating(models.Model):
     sound_rating = models.DecimalField(max_digits=2, decimal_places=1)
     story_rating = models.DecimalField(max_digits=2, decimal_places=1)
 
+    def __str__(self):
+        return f"{self.review} rating"
+
     def save(self, *args, **kwargs):
         if self.review:
             # Calculate the overall rating as an average of individual ratings
@@ -176,6 +182,7 @@ class Rating(models.Model):
             self.review.save()
 
         super().save(*args, **kwargs)
+    
     
 class Review(models.Model):
     title = models.CharField(max_length=200, default="")
@@ -208,6 +215,9 @@ class Review(models.Model):
         if hasattr(HttpRequest, 'user') and self._request.user.is_authenticated:
             return self._request.user
         return None
+    
+    def __str__(self):
+        return f"{self.title} - {self.game}"
 
 #this is where the ratings average out to give the review an overall rating
 @receiver(post_save, sender=Rating)

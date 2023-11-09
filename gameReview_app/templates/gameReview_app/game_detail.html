@@ -45,10 +45,14 @@
         {% endfor %}
     </div>
 
-    <!-- "Add Review" Button -->
+    <!-- "Add Review" Button (Only for Authenticated Users) -->
     <div class="row mt-3">
         <div class="col-md-12">
-            <a href="{% url 'create_review' game.id %}" class="btn btn-primary">Add Review</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'create_review' game.id %}" class="btn btn-primary">Add Review</a>
+            {% else %}
+                <p>Please <a href="{% url 'login' %}">log in</a> to add a review.</p>
+            {% endif %}
         </div>
     </div>
 </div>
