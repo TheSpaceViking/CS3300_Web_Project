@@ -1,33 +1,38 @@
+from datetime import timedelta
+from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from .models import Game, Platform, Genre, User, Publisher, Review
+from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, RatingForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.db.models import Q
-from .models import Game, Platform, Genre, User, Publisher
-from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, RatingForm
+from django.contrib import messages
 
-# Create your views here.
 def index(request):
+    games = Game.objects.all()
+
     if request.user.is_authenticated:
         user_genres = request.user.favorite_genres.all()
         if user_genres.count() > 0:
-            # Use Q objects and distinct to ensure unique games
             games = Game.objects.filter(Q(genre__in=user_genres) | Q(genre__isnull=True)).distinct()
-        else:
-            games = Game.objects.all
-    else:
-        games = Game.objects.all()
 
-    return render(request, 'gameReview_app/index.html', {'games': games})
+    latest_reviews = Review.objects.filter(game__in=games, created_at__gte=timezone.now() - timezone.timedelta(days=1))
+    games_with_newest_reviews = sorted(set(review.game for review in latest_reviews), key=lambda game: max(review.created_at for review in latest_reviews if review.game == game), reverse=True)
+
+    return render(request, 'gameReview_app/index.html', {'games': games_with_newest_reviews})
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
 
+    def form_valid(self, form):
+        messages.success(self.request, 'Login successful')  # Add this line for debugging
+        return super().form_valid(form)
+
 @login_required
 def user_profile(request):
-    # Your user profile logic here
     return render(request, 'index.html')
 
 def redirect_to_index(request):
@@ -38,20 +43,16 @@ def game_list(request):
     return render(request, 'gameReview_app/game_list.html', {'games': games})
 
 def game_detail(request, game_id):
-    # Retrieve the game instance
     game = Game.objects.get(pk=game_id)
-    
+
     if request.method == 'POST':
-        # If a POST request, process the form
         review_form = ReviewForm(request.POST)
         if review_form.is_valid():
-            # Save the form with the current game instance
             review = review_form.save(commit=False)
-            review.game = game  # Set the game instance
+            review.game = game
             review.save()
             return redirect('game_detail', game_id=game_id)
     else:
-        # If a GET request, display the form
         review_form = ReviewForm()
 
     return render(request, 'gameReview_app/game_detail.html', {'game': game, 'review_form': review_form})
@@ -86,14 +87,12 @@ def add_game(request):
 
             game.save()
 
-            messages.success(request, 'Game added successfully.')  # Display a success message
-
+            messages.success(request, 'Game added successfully.')
             return redirect('game_detail', game_id=game.id)
     else:
         form = GameForm()
 
     return render(request, 'gameReview_app/game_form.html', {'form': form, 'publishers': publishers})
-
 
 @login_required
 def create_review(request, game_id):
@@ -106,15 +105,14 @@ def create_review(request, game_id):
         if review_form.is_valid() and rating_form.is_valid():
             review = review_form.save(commit=False)
             review.game = game
-            review.user = request.user  # Associate the review with the logged-in user
-            review.save()  # Save the Review instance first
+            review.user = request.user
+            review.save()
 
             rating = rating_form.save(commit=False)
             rating.game = game
             rating.review = review
-            rating.save()  # Save the Rating instance after the Review instance
+            rating.save()
 
-            # Redirect to the game details page or another view
             return redirect('game_detail', game_id=game_id)
     else:
         review_form = ReviewForm()
@@ -126,7 +124,6 @@ def create_review(request, game_id):
         'rating_form': rating_form,
     })
 
-    
 def user_registration(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -138,11 +135,9 @@ def user_registration(request):
             password = form.cleaned_data['password']
             favorite_genres = form.cleaned_data['favorite_genres']
 
-            # Create a new user and save to the database
             user = User.objects.create_user(email=email, first_name=first_name, last_name=last_name, user_name=user_name, password=password)
             user.favorite_genres.set(favorite_genres)
 
-            # Redirect to login page
             return redirect('login')
     else:
         form = UserRegistrationForm()
@@ -154,7 +149,6 @@ def add_publisher(request):
         form = PublisherForm(request.POST)
         if form.is_valid():
             form.save()
-            # Redirect to a success page
             return redirect('success_page')
     else:
         form = PublisherForm()
@@ -166,8 +160,40 @@ def signup(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)  # Log the user in after registration
-            return redirect('home')  # Redirect to the home page or another appropriate page
+            login(request, user)
+            return redirect('home')
     else:
         form = UserRegistrationForm()
     return render(request, 'signup.html', {'form': form})
+
+def search_results(request):
+    if request.method == 'GET':
+        search_text = request.GET.get('search_text', '')
+        games = Game.objects.filter(title__icontains=search_text)
+        return render(request, 'gameReview_app/search_results.html', {'games': games})
+    return render(request, 'gameReview_app/search_results.html')
+
+def delete_game(request, game_id):
+    game = get_object_or_404(Game, id=game_id)
+    if request.user == game.publisher.user:
+        game.delete()
+        return redirect('index')
+
+def delete_review(request, game_id, review_id):
+    game = get_object_or_404(Game, id=game_id)
+    review = get_object_or_404(Review, id=review_id)
+
+    if request.user == review.user:
+        # Delete the associated rating
+        rating = review.review_ratings
+        if rating:
+            rating.delete()
+
+        # Delete the review
+        review.delete()
+
+        # Recalculate the game's overall rating
+        game.calculate_overall_average_rating()
+        game.save()
+
+        return redirect('game_detail', game_id=game.id)

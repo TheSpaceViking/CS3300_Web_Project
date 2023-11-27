@@ -1,5 +1,6 @@
 from django.urls import path, include
-from gameReview_app.views import CustomLoginView
+from gameReview_app.views import CustomLoginView, search_results
+from django.contrib.auth.views import LoginView
 from . import views
 
 urlpatterns = [
@@ -17,4 +18,7 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/profile/', views.redirect_to_index, name='profile_redirect'),
+    path('search_results/', search_results, name='search_results'),
+    path('delete_game/<int:game_id>/', views.delete_game, name='delete_game'),
+    path('delete_review/<int:game_id>/<int:review_id>/', views.delete_review, name='delete_review'),
 ]

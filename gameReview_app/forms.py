@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
-from .models import Game, Review, Rating, Genre, Publisher
+from django.core.exceptions import ValidationError
+from .models import Game, Review, Rating, Genre, Publisher, User
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -17,6 +18,18 @@ class UserRegistrationForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
         label='Favorite Genres'
     )
+
+    def clean_user_name(self):
+        user_name = self.cleaned_data['user_name']
+        if User.objects.filter(user_name=user_name).exists():
+            raise ValidationError("This username is already taken. Please choose a different one.")
+        return user_name
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email address is already registered. Please use a different one.")
+        return email
     
 class GameForm(forms.ModelForm):
     class Meta:

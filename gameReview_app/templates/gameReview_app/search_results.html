@@ -1,0 +1,13 @@
+<!-- gameReview_app/search_results.html -->
+{% for game in games %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title"><a href="{% url 'game_detail' game.id %}">{{ game.title }}</a></h5>
+            <p class="card-text" style="font-size: 14px;"><strong>Publisher:</strong> {{ game.publisher.name }}</p>
+            <p class="card-text" style="font-size: 14px;"><strong>Overall Rating:</strong> {{ game.overall_rating }}</p>
+            <!-- Add more details as needed -->
+        </div>
+    </div>
+{% empty %}
+    <p>No results found.</p>
+{% endfor %}

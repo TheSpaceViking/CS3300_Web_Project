@@ -1,5 +1,6 @@
 from django.db import models
 from django.http import HttpRequest
+from django.utils import timezone
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db.models import Avg
@@ -39,7 +40,7 @@ class UserManager(BaseUserManager):
     def create_user(self, email, first_name, last_name, user_name, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email)  # Normalize email to lowercase
         user = self.model(email=email, first_name=first_name, last_name=last_name, user_name=user_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -67,7 +68,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'user_name'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
     def __str__(self):
@@ -149,7 +150,7 @@ class Game(models.Model):
 class Rating(models.Model):
     review = models.OneToOneField(
         'gameReview_app.Review',
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='review_ratings'
@@ -187,7 +188,7 @@ class Rating(models.Model):
 class Review(models.Model):
     title = models.CharField(max_length=200, default="")
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
-    game = models.ForeignKey(Game, on_delete=models.SET_NULL, null=True, blank=True)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, null=True, blank=True)
     content = models.CharField(max_length=1000)
     overall_rating = models.DecimalField(
         max_digits=2,
@@ -195,6 +196,7 @@ class Review(models.Model):
         null=True,
         blank=True,
     )
+    created_at = models.DateTimeField(default=timezone.now)  # Add this line
 
     def save(self, *args, **kwargs):
         # Get the currently logged-in user from the request object

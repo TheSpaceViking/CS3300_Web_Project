@@ -4,22 +4,22 @@
 
 <!-- override block content in template -->
 {% block content%}
-<div class="container text-center">
+<div class="container text-center mt-5">
     <h1>Welcome to Gamer Reviews 4 Gamers!</h1>
     <br>
 </div>
-<div class="container text-left">
+<div class="container text-center mx-auto">
     <h2>Recently Reviewed Games:</h2>
     <div class="row">
         {% for game in games %}
-            <div class="col-lg-4 col-md-6 col-sm-12"> <!-- Adjust the column sizes as needed -->
+            <div class="col-lg-4 col-md-6 col-sm-12 mx-auto">
                 <div class="card mb-4">
                     <a href="{% url 'game_detail' game.id %}">
                         <div class="custom-card-img-container">
                             <img src="{{ game.cover_image.url }}" alt="{{ game.title }}" class="card-img-top custom-card-img">
                         </div>
                     </a>
-                    <div class="card-body text-center"> <!-- Center text -->
+                    <div class="card-body">
                         <a href="{% url 'game_detail' game.id %}">
                             <h5 class="card-title">{{ game.title }}</h5>
                             <p>Overall Rating: {{ game.overall_rating }}/5</p>

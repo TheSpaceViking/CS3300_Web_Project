@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'gameReview_app',
     'bootstrap5',
+    'star_ratings',
 ]
 
 AUTHENTICATION_BACKENDS =[
