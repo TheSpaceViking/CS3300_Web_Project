@@ -5,11 +5,12 @@ from django.contrib.auth import login
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from .models import Game, Platform, Genre, User, Publisher, Review
-from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, RatingForm
+from .forms import ReviewForm, GameForm, UserRegistrationForm, PublisherForm, RatingForm, EditReviewForm, EditRatingForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
+from django.views.generic.detail import DetailView
 
 def index(request):
     games = Game.objects.all()
@@ -198,3 +199,41 @@ def delete_review(request, game_id, review_id):
         game.save()
 
         return redirect('game_detail', game_id=game.id)
+    
+def edit_review(request, game_id, review_id):
+    game = get_object_or_404(Game, id=game_id)
+    review = get_object_or_404(Review, id=review_id, game=game, user=request.user)
+
+    if request.method == 'POST':
+        review_form = EditReviewForm(request.POST, instance=review)
+        rating_form = EditRatingForm(request.POST, instance=review.review_ratings)
+
+        if review_form.is_valid() and rating_form.is_valid():
+            review_form.save()
+            rating_form.save()
+
+            # Recalculate the game's overall rating
+            game.calculate_overall_average_rating()
+            game.save()
+
+            return redirect('game_detail', game_id=game_id)
+    else:
+        review_form = EditReviewForm(instance=review)
+        rating_form = EditRatingForm(instance=review.review_ratings)
+
+    return render(request, 'gameReview_app/edit_review_form.html', {
+        'game': game,
+        'review_form': review_form,
+        'rating_form': rating_form,
+    })    
+
+def review_detail(request, game_id, review_id):
+    game = get_object_or_404(Game, id=game_id)
+    review = get_object_or_404(Review, id=review_id)
+
+    context = {
+        'game': game,
+        'review': review,
+    }
+
+    return render(request, 'gameReview_app/review_detail.html', context)

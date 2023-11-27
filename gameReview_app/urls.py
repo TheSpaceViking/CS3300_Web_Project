@@ -1,5 +1,5 @@
 from django.urls import path, include
-from gameReview_app.views import CustomLoginView, search_results
+from gameReview_app.views import CustomLoginView, search_results, review_detail
 from django.contrib.auth.views import LoginView
 from . import views
 
@@ -21,4 +21,6 @@ urlpatterns = [
     path('search_results/', search_results, name='search_results'),
     path('delete_game/<int:game_id>/', views.delete_game, name='delete_game'),
     path('delete_review/<int:game_id>/<int:review_id>/', views.delete_review, name='delete_review'),
+    path('edit_review/<int:game_id>/<int:review_id>/', views.edit_review, name='edit_review'),
+    path('review/<int:game_id>/<int:review_id>/', review_detail, name='review_detail'),
 ]

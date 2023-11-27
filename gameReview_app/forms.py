@@ -77,3 +77,23 @@ class PublisherForm(forms.ModelForm):
     class Meta:
         model = Publisher
         fields = ['name', 'website', 'contact']
+
+class EditReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        exclude = ['game', 'user', 'overall_rating']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 5}),
+            'overall_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
+        }
+
+class EditRatingForm(forms.ModelForm):
+    class Meta:
+        model = Rating
+        exclude = ['game', 'review', 'overall_rating']
+        widgets = {
+            'gameplay_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
+            'graphics_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
+            'sound_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
+            'story_rating': forms.NumberInput(attrs={'min': 1, 'max': 5, 'step': 0.5}),
+        }
