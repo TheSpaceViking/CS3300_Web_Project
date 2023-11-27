@@ -196,14 +196,15 @@ class Review(models.Model):
         null=True,
         blank=True,
     )
-    created_at = models.DateTimeField(default=timezone.now)  # Add this line
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
 
     def save(self, *args, **kwargs):
-        # Get the currently logged-in user from the request object
-        user = self._get_current_user()
+        if not self.user_id:
+            # Get the currently logged-in user from the request object
+            user = self._get_current_user()
 
-        if user:
-            self.user = user
+            if user:
+                self.user = user
 
         super().save(*args, **kwargs)
 
@@ -214,7 +215,7 @@ class Review(models.Model):
     def _get_current_user(self):
         # This function tries to get the currently logged-in user from the request object
         # You should pass the request object when saving a review
-        if hasattr(HttpRequest, 'user') and self._request.user.is_authenticated:
+        if hasattr(self, '_request') and hasattr(self._request, 'user') and self._request.user.is_authenticated:
             return self._request.user
         return None
     

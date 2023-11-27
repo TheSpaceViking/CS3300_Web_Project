@@ -106,6 +106,7 @@ def create_review(request, game_id):
             review = review_form.save(commit=False)
             review.game = game
             review.user = request.user
+            review._request = request  # Pass the request object to the save method
             review.save()
 
             rating = rating_form.save(commit=False)
@@ -169,7 +170,7 @@ def signup(request):
 def search_results(request):
     if request.method == 'GET':
         search_text = request.GET.get('search_text', '')
-        games = Game.objects.filter(title__icontains=search_text)
+        games = Game.objects.filter(Q(title__icontains=search_text) | Q(genre__game_genre__icontains=search_text))
         return render(request, 'gameReview_app/search_results.html', {'games': games})
     return render(request, 'gameReview_app/search_results.html')
 
