@@ -1,6 +1,8 @@
 from django.urls import path, include
 from gameReview_app.views import CustomLoginView, search_results, review_detail
 from django.contrib.auth.views import LoginView
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
@@ -23,4 +25,7 @@ urlpatterns = [
     path('delete_review/<int:game_id>/<int:review_id>/', views.delete_review, name='delete_review'),
     path('edit_review/<int:game_id>/<int:review_id>/', views.edit_review, name='edit_review'),
     path('review/<int:game_id>/<int:review_id>/', review_detail, name='review_detail'),
-]
+] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
