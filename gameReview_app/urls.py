@@ -1,6 +1,5 @@
 from django.urls import path, include
 from gameReview_app.views import CustomLoginView, search_results, review_detail
-from django.contrib.auth.views import LoginView
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
