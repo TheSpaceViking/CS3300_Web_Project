@@ -171,8 +171,12 @@ def signup(request):
 def search_results(request):
     if request.method == 'GET':
         search_text = request.GET.get('search_text', '')
-        games = Game.objects.filter(Q(title__icontains=search_text) | Q(genre__game_genre__icontains=search_text))
+        
+        # Filter games by title or genre, and select distinct titles
+        games = Game.objects.filter(Q(title__icontains=search_text) | Q(genre__game_genre__icontains=search_text)).distinct()
+        
         return render(request, 'gameReview_app/search_results.html', {'games': games})
+    
     return render(request, 'gameReview_app/search_results.html')
 
 def delete_game(request, game_id):
